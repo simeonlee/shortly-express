@@ -6,6 +6,9 @@ var Click = db.Model.extend({
   hasTimestamps: true,
   link: function() {
     return this.belongsTo(Link, 'linkId');
+  },
+  user: function() {
+    return this.belongsTo(User, 'userId');
   }
 });
 

@@ -28,6 +28,15 @@ function(req, res) {
   res.render('index');
 });
 
+app.get('/signup', function(req, res) {
+
+});
+
+app.post('/signup', function(req, res) {
+
+});
+
+
 app.get('/create', 
 function(req, res) {
   res.render('index');

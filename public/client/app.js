@@ -21,6 +21,11 @@ window.Shortly = Backbone.View.extend({
     return this;
   },
 
+  renderSignupView: function(e) {
+    e && e.preventDefault();
+    this.router.navigate('/signup', { trigger: true });
+  },
+
   renderIndexView: function(e) {
     e && e.preventDefault();
     this.router.navigate('/', { trigger: true });
