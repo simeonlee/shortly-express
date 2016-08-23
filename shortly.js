@@ -72,9 +72,8 @@ app.post('/login', function(req, res) {
       // get user salt here
       var salt = user.get('salt');
       var hash = bcrypt.hashSync(req.body.password, salt);
-
       // do compare function here
-      if (bcrypt.compareSync(hash, user.get('password'))) {
+      if (hash === user.get('password')) {
         // if the passwords match, do the below
         req.session.authenticated = true;
         req.session.user = req.body.username;
