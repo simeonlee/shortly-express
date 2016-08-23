@@ -28,14 +28,15 @@ function(req, res) {
   res.render('index');
 });
 
-app.get('/signup', function(req, res) {
-
-});
-
 app.post('/signup', function(req, res) {
-
+  console.log('We\'ve signed up the user!');
+  new User({ username: req.body.username, password: req.body.password }).fetch().then(function(found) {
+    if (found) {
+      res.status(200).send(found.attributes);
+    }
+  });
+  console.log('We\'ve created the user in the database!');
 });
-
 
 app.get('/create', 
 function(req, res) {
@@ -49,7 +50,7 @@ function(req, res) {
   });
 });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 

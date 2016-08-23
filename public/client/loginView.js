@@ -1,7 +1,7 @@
-Shortly.signupView = Backbone.View.extend({
+Shortly.loginView = Backbone.View.extend({
   className: 'creator',
 
-  template: Templates['signup'],
+  template: Templates['login'],
 
   events: {
     'submit': null // TODO: authenticate user
@@ -16,7 +16,7 @@ Shortly.signupView = Backbone.View.extend({
     e && e.preventDefault();
     var $username = this.$el.find('#username');
     var $password = this.$el.find('#password');
-    var user = new Shortly.User({ username: $username.val(), password: $password.val(), sessionState: 'signup' });
+    var user = new Shortly.User({ username: $username.val(), password: $password.val(), sessionState: 'login' });
     user.save({});
     $username.val('');
     $password.val('');
