@@ -3,6 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var bcrypt = require('bcrypt-nodejs');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -12,6 +13,7 @@ var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 
 var app = express();
+var sessionId;
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -21,36 +23,21 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
-// app.use(session({
-//   secret: 'simeon',
-//   resave: false,
-//   saveUnitialized: true,
-//   cookie: {secure: true}
-// }));
-
-// function restrict(req, res, next) {
-//   if (req.session.user) {
-//     next();
-//   } else {
-//     req.session.error = 'Access denied!';
-//     res.redirect('/login');
-//   }
-// }
-
+app.use(session({
+  secret: 'simeon',
+  resave: false,
+  saveUnitialized: true,
+  // cookie: {secure: true}
+}));
 
 app.get('/', 
 function(req, res) {
-  if (req.session.user) {
+  console.log('In app.get("/") handler');
+  if (req.session.authenticated) {
     res.render('index');
   } else {
     res.redirect('/login');
   }
-});
-    
-
-app.get('/login', function(req, res) {
-  //test that user is signed in
-  res.render('login');
 });
 
 app.get('/signup', function(req, res) {
@@ -67,23 +54,54 @@ app.post('/signup', function(req, res) {
       password: req.body.password,
     })
     .then(function(newUser) {
-      res.set('location', '/');
-      res.status(200).send(newUser);
+      req.session.authenticated = true;
+      req.session.user = req.body.username;
+      res.redirect('/');
     });
   });
-  // console.log('We\'ve created the user in the database!');
-  // User.where('username', 'apple').fetch().then(function(user) {
-  //   console.log('We found ' + user);
-  //   console.log(user);
-  // }).catch(function(err) {
-  //   console.log(err);
-  // });
 });
 
+app.get('/login', function(req, res) {
+  res.render('login');
+});
+
+app.post('/login', function(req, res) {
+  var user = new User({ username: req.body.username });
+  user.fetch().then(function(found) {
+    if (found) {
+      // get user salt here
+      var salt = user.get('salt');
+      var hash = bcrypt.hashSync(req.body.password, salt);
+
+      // do compare function here
+      if (bcrypt.compareSync(hash, user.get('password'))) {
+        // if the passwords match, do the below
+        req.session.authenticated = true;
+        req.session.user = req.body.username;
+        res.redirect('/');
+      } else {
+        // else log an error saying wrong password
+        console.log('You\'ve entered an incorrect password');
+        res.redirect('/login');
+      }
+    } else {
+      console.log('User or password not found in database');
+      res.redirect('/login');
+    }
+  });
+});
+
+app.post('/logout', function(req, res) {
+  if (req.session.authenticated) {
+    req.session.destroy(function() {
+      res.redirect('/');
+    });
+  }
+});
 
 app.get('/create', 
 function(req, res) {
-  if (req.session.user) {
+  if (req.session.id) {
     res.render('index');
   } else {
     res.redirect('/login');
@@ -92,7 +110,7 @@ function(req, res) {
 
 app.get('/links', 
 function(req, res) {
-  if (req.session.user) {
+  if (req.session.id) {
     Links.reset().fetch().then(function(links) {
       res.status(200).send(links.models);
     });
@@ -103,7 +121,7 @@ function(req, res) {
 
 app.post('/links',
 function(req, res) {
-  if (req.session.user) {
+  if (req.session.id) {
     var uri = req.body.url;
 
     if (!util.isValidUrl(uri)) {
